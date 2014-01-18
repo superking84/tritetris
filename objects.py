@@ -46,6 +46,7 @@ class Block(object):
         self.field = field
         self.color = color # this should be in RGB format (or a pygcolors constant)
         self.type = type
+        self.orientation = 0
 
     def place_on_field(self, init_location, orientation=0):
         '''
@@ -60,4 +61,14 @@ class Block(object):
             new_location = (init_location[0]  + offset[0], init_location[1] + offset[1])
             self.locations.append(new_location)
             
-# TODO: Block.rotate method
+    def rotate(self, forwards=True):
+        '''
+        Tilts the Block clockwise 90 degrees if forwards is set to True(set to True
+        by default), counterclockwise if False.
+        '''
+        if forwards:
+            self.orientation = (self.orientation + 90) % 360
+        else:
+            self.orientation = (self.orientation - 90) % 360
+            
+# TODO: Begin to build graphical interface for game
