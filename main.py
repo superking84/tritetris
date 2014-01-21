@@ -41,7 +41,7 @@ def draw_field(surface, field):
     
 def play():
     field = objects.Field(NUM_ROWS, NUM_COLUMNS)
-    block = objects.Block(field, 'I', RED)
+    block = objects.Block(field, 'I', RED) # just an example
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
