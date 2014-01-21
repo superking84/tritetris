@@ -45,10 +45,11 @@ class Field(object):
 
 class Block(object):
     '''
-    It is important to note that the Block object is not initialized with a location.
-    Since Blocks are initially off-screen, in queue and waiting to be placed, they
-    start off without a location.  Only when the game logic pulls them to the
-    front of the queue are they given a location in the place_on_field method.
+    A Block object covering four squares (or cells) within its parent Field.
+    Each block type has a keystone square from which the coordinates of the
+    other three squares of the Block are determined.  For example, an 'I' 
+    Block at 0 degree orientation and at coordinates (5,4) would have squares at:
+        (5,4), (5,5), (5,6), (5,7) which represent the Block in vertical position.
     '''
 
     _type_offsets = {
@@ -65,11 +66,11 @@ class Block(object):
                      }
     _types = _type_offsets.keys()
 
-    def __init__(self, field, type, color):
+    def __init__(self, field, block_type, color):
         self.locations = [] # this will hold four tuples indicating the block's location once init'd
         self.field = field
         self.color = color # this should be in RGB format (or a pygcolors constant)
-        self.type = type
+        self.type = block_type
         self.orientation = 0
         
     def __repr__(self):
@@ -79,7 +80,8 @@ class Block(object):
 
     def _set_locations(self, init_location):
         '''
-        This function applies a Block's starting location so that it can appear on the
+        Using the 
+        Applies a Block's starting location so that it can appear on the
         game field.
         Each Block type has three offsets.  init_location and these three offsets
         represent the location of each of the Block's four pieces.
