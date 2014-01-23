@@ -29,37 +29,69 @@ class Field(object):
         
     __str__ = __repr__
     
-    def create_block(self, type, color):
-        return Block(self, type, color)
+    # def create_block(self, type, color):
+        # return Block(self, type, color)
         
     def create_random_block(self):
-        return Block(self, random.choice(Block._types), colors.get_random_color())
+        return Block(self, random.choice(Block._types),\
+                     colors.get_random_color())
         
     def add_block_to_queue(self, block):
-        # changed to take a block as a parameter rather than assuming a random block
         self.block_queue.append(block)
     
     def load_queue(self):
         while len(self.block_queue) < self.queue_limit:
-            self.add_block_to_queue()
+            block = self.create_random_block()
+            self.add_block_to_queue(block)
     
     def get_block_from_queue(self):
         if self.block_queue:
-            return self.block_queue.pop(0)
+            block_to_return = self.block_queue.pop(0)
+            self.active_block = block_to_return
+            
+            new_block = self.create_random_block()
+            self.add_block_to_queue(new_block)
+            
+            return block_to_return
         else:
             print "Queue is empty!"
             
-    def place_block(self, block, location):
+    def place_block(self, location):
+        block = self.active_block
+        
         block.set_locations(location)
         for coordinate in block.locations:
             row, column = coordinate
             self.cells[row][column] = block.color
+            
+    def move_block(self, direction):
+        if direction not in ([1,0],[-1,0],[0,1],[0,-1]):
+            return None
+        else:
+            block = self.active_block
+            old_location = block.locations
+            for coordinate in old_location:
+                row, column = coordinate
+                self.cells[row][column] = None
+            
+            row, column = block.locations[0]
+            delta_row, delta_column = direction
+            self.place_block([row + delta_row, column + delta_column])
 
-    def rotate(self, block, clockwise=True):
+    def rotate_block(self, clockwise=True):
         '''
-        Tilts the Block clockwise 90 degrees if clockwise is set to True(set to True
-        by default), counterclockwise if False.
+        Tilts the Block clockwise 90 degrees if clockwise is set to True(set to
+        True by default), counterclockwise if False.
+        
         '''
+    ### TODO: Add logic that will preclude rotation from happening if something
+    ### is in the way: the floor, wall, a previously-placed block, or ceiling.
+    ### BUG: If block is up against the wall, rotating shouldn't work.
+    ### Right now, it tries to rotate and in the process makes me unable to
+    ### Move the block at all.  If I press R again to rotate again, it frees
+    ### the block up to continue moving.
+        block = self.active_block
+        
         valid_offsets = Block._type_offsets[block.type].keys()
         current_index = valid_offsets.index(block.orientation)
         old_orientation = block.orientation
@@ -81,14 +113,15 @@ class Field(object):
                 row, column = coordinate
                 block.field.cells[row][column] = None
             block.set_locations(block.locations[0])
-            self.place_block(block, head_loc)
+            self.place_block(head_loc)
 
 class Block(object):
     '''
     A Block object covering four squares (or cells) within its parent Field.
     Each block type has a keystone square from which the coordinates of the
     other three squares of the Block are determined.  For example, an 'I' 
-    Block at 0 degree orientation and at coordinates (5,4) would have squares at:
+    Block at 0 degree orientation and at coordinates (5,4) would have squares
+    at:
         (5,4), (5,5), (5,6), (5,7) which represent the Block in vertical index.
     '''
 
@@ -107,14 +140,14 @@ class Block(object):
     _types = _type_offsets.keys()
 
     def __init__(self, field, block_type, color):
-        self.locations = [] # this will hold four tuples indicating the block's location once init'd
+        self.locations = [] # will contain location offsets once initialized
         self.field = field
-        self.color = color # this should be in RGB format (or a pygcolors constant)
+        self.color = color # RGB or colors.py constant
         self.type = block_type
         self.orientation = 0
         
     def __repr__(self):
-        return 'Block type %s' % self.type
+        return '%s %s' % (self.color, self.type)
         
     __str__ = __repr__
 
@@ -123,13 +156,17 @@ class Block(object):
         Using the 
         Applies a Block's starting location so that it can appear on the
         game field.
-        Each Block type has three offsets.  init_location and these three offsets
-        represent the location of each of the Block's four pieces.
+        Each Block type has three offsets.  init_location and these three
+        offsets represent the location of each of the Block's four pieces.
         '''
-        if self.locations:
-            self.locations = []
-        self.locations.append(init_location)
+        new_locations = [init_location]
+        
         for offset in self._type_offsets[self.type][self.orientation]:
-            new_location = (init_location[0]  + offset[0], init_location[1] + offset[1])
-            self.locations.append(new_location)
+            new_coordinate = (init_location[0]  + offset[0],\
+                            init_location[1] + offset[1])
+            if new_coordinate[0] not in xrange(self.field.num_rows) or \
+               new_coordinate[1] not in xrange(self.field.num_columns):
+                return None
+            new_locations.append(new_coordinate)
             
+        self.locations = new_locations

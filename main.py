@@ -40,9 +40,11 @@ def draw_field(surface, field):
     
     
 def play():
+    directions = {K_UP:[-1,0], K_DOWN:[1,0], K_LEFT:[0,-1], K_RIGHT:[0,1]}
     field = objects.Field(NUM_ROWS, NUM_COLUMNS)
-    block = objects.Block(field, 'S', YELLOW) # just an example
-    field.place_block(block,(3,4))
+    field.load_queue()
+    field.get_block_from_queue()
+    field.place_block((1,4))
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -51,7 +53,11 @@ def play():
                 if event.key == K_ESCAPE:
                     terminate()
                 if event.key == K_r:
-                    field.rotate(block)
+                    field.rotate_block()
+                if event.key == K_l:
+                    print field.block_queue
+                if event.key in directions.keys():
+                    field.move_block(directions[event.key])
                     
                     
         DISPLAYSURFACE.fill(WHITE)
