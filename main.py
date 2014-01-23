@@ -31,17 +31,18 @@ def draw_field(surface, field):
     Draws the given field and its current state to the display surface.
     '''
     
-    # DEBUG CODE: Show grid as a visual aid during coding
-    for i in range(1,field.num_rows+1):
-        pygame.draw.line(surface, BLACK, (0, CELL_HEIGHT * i), (FIELD_WIDTH, CELL_HEIGHT * i))
-    for j in range(1,field.num_columns+1):
-        pygame.draw.line(surface, BLACK, (CELL_WIDTH * j, 0), (CELL_WIDTH  * j, SCREEN_HEIGHT))
-    # END DEBUG CODE
+    for i in range(field.num_rows):
+        for j in range(field.num_columns):
+            if field.cells[i][j]:
+                cell_color = field.cells[i][j]
+                pygame.draw.rect(surface, cell_color, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT))
+                pygame.draw.rect(surface, BLACK, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT), 1)
     
     
 def play():
     field = objects.Field(NUM_ROWS, NUM_COLUMNS)
-    block = objects.Block(field, 'I', RED) # just an example
+    block = objects.Block(field, 'S', YELLOW) # just an example
+    field.place_block(block,(3,4))
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -49,6 +50,9 @@ def play():
             if event.type == KEYUP:
                 if event.key == K_ESCAPE:
                     terminate()
+                if event.key == K_r:
+                    field.rotate(block)
+                    
                     
         DISPLAYSURFACE.fill(WHITE)
         draw_field(DISPLAYSURFACE, field)
