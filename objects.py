@@ -22,6 +22,12 @@ class Field(object):
             for j in range(num_columns):
                 self.cells[i].append(None)
                 
+        self.load_queue()
+        self.get_block_from_queue()
+                
+    def __getitem__(self, key):
+        return self.cells[key]
+        
     def __repr__(self):
         output = '\n'.join([str([cell for cell in row]) for row in self.cells])
         
@@ -46,13 +52,12 @@ class Field(object):
     
     def get_block_from_queue(self):
         if self.block_queue:
-            block_to_return = self.block_queue.pop(0)
-            self.active_block = block_to_return
+            self.active_block = self.block_queue.pop(0)
+            self.add_block_to_queue(self.create_random_block())
+            self.place_block((1,4))
             
-            new_block = self.create_random_block()
-            self.add_block_to_queue(new_block)
-            
-            return block_to_return
+            # don't believe I need this return statement -- let's see
+            # return block_to_return
         else:
             print "Queue is empty!"
             
@@ -64,10 +69,31 @@ class Field(object):
             row, column = coordinate
             self.cells[row][column] = block.color
             
-    def move_block(self, direction):
-        if direction not in ([1,0],[-1,0],[0,1],[0,-1]):
-            return None
-        else:
+    def active_block_has_landed(self):
+        block = self.active_block
+        
+        for coordinate in block.locations:
+            row, column = coordinate
+            row_beneath = row + 1
+            if row_beneath >= self.num_rows:
+                return True
+                
+            cell_beneath = self.cells[row_beneath][column]
+            
+            if cell_beneath and (row_beneath, column) not in block.locations:
+                return True
+                
+    def drop_active_block(self):
+        block = self.active_block
+        
+        for coordinate in block.locations:
+            row, column = coordinate
+            self.cells[row][column] = block.color
+            
+        self.get_block_from_queue()
+        
+    def move_active_block(self, direction):
+        if not self.active_block_has_landed():
             block = self.active_block
             old_location = block.locations
             for coordinate in old_location:
@@ -76,43 +102,38 @@ class Field(object):
             
             row, column = block.locations[0]
             delta_row, delta_column = direction
-            self.place_block([row + delta_row, column + delta_column])
+            self.place_block((row + delta_row, column + delta_column))
+        else:
+            self.drop_active_block()
 
     def rotate_block(self, clockwise=True):
         '''
         Tilts the Block clockwise 90 degrees if clockwise is set to True(set to
         True by default), counterclockwise if False.
-        
         '''
-    ### TODO: Add logic that will preclude rotation from happening if something
-    ### is in the way: the floor, wall, a previously-placed block, or ceiling.
-    ### BUG: If block is up against the wall, rotating shouldn't work.
-    ### Right now, it tries to rotate and in the process makes me unable to
-    ### Move the block at all.  If I press R again to rotate again, it frees
-    ### the block up to continue moving.
         block = self.active_block
+        old_locations = block.locations
         
         valid_offsets = Block._type_offsets[block.type].keys()
         current_index = valid_offsets.index(block.orientation)
         old_orientation = block.orientation
         
         if clockwise:
-            new_index = current_index + 1
-            if new_index >= len(valid_offsets):
-                new_index = 0
+            new_index = (current_index + 1) % len(valid_offsets)
         else:
             new_index = current_index - 1
             
         block.orientation = valid_offsets[new_index]
             
-        # some blocks don't need different orientations;
-        # 'O' only has one, and 'S' and 'Z' only have two
+        # don't do anything if orientation hasn't changed
         if block.orientation != old_orientation:
             head_loc = block.locations[0]
             for coordinate in block.locations:
                 row, column = coordinate
                 block.field.cells[row][column] = None
             block.set_locations(block.locations[0])
+            if block.locations == old_locations:
+                block.orientation = old_orientation
             self.place_block(head_loc)
 
 class Block(object):
@@ -164,9 +185,12 @@ class Block(object):
         for offset in self._type_offsets[self.type][self.orientation]:
             new_coordinate = (init_location[0]  + offset[0],\
                             init_location[1] + offset[1])
-            if new_coordinate[0] not in xrange(self.field.num_rows) or \
-               new_coordinate[1] not in xrange(self.field.num_columns):
-                return None
             new_locations.append(new_coordinate)
             
-        self.locations = new_locations
+        for coordinate in new_locations:
+            y, x = coordinate
+            if y not in xrange(0,self.field.num_rows) or \
+               x not in xrange(0, self.field.num_columns):
+                return False
+        else:
+            self.locations = new_locations
