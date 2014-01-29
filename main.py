@@ -38,7 +38,7 @@ def draw_field(surface, field):
     for i in range(field.num_rows):
         for j in range(field.num_columns):
             if field.cells[i][j]:
-                cell_color = field.cells[i][j]
+                cell_color = field.cells[i][j]['color']
                 pygame.draw.rect(surface, cell_color, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT))
                 pygame.draw.rect(surface, BLACK, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT), 1)
     
@@ -51,10 +51,16 @@ def play():
     # field.load_queue()
     # field.get_block_from_queue()
     time_counter = 0
-    game_speed = 600
+    tick_delay = 600
+    pause = False
     while True:
-        time_counter += FPS
-        if time_counter >= game_speed:
+        if not pause:
+            time_counter += FPS
+        if time_counter >= tick_delay:
+            if field.active_block_has_landed():
+                print "True"
+                field.drop_active_block()
+                field.get_block_from_queue()
             tick(field)
             time_counter = 0
         for event in pygame.event.get():
@@ -63,14 +69,20 @@ def play():
             if event.type == KEYUP:
                 if event.key == K_ESCAPE:
                     terminate()
-                if event.key == K_UP:
-                    field.rotate_block()
                 if event.key == K_l:
                     print field.block_queue
-                if event.key in directions.keys():
-                    field.move_active_block(directions[event.key])
-                if event.key == K_DOWN:
-                    time_counter = game_speed
+                if event.key == K_p:
+                    pause = not pause
+                if not pause:
+                    if event.key == K_UP:
+                        field.rotate_block()
+                    if event.key in directions.keys():
+                        field.move_active_block(directions[event.key])
+                    if event.key == K_DOWN:
+                        time_counter = tick_delay
+                    if event.key == K_SPACE:
+                        while not field.active_block_has_landed():
+                            tick(field)
                     
                     
         DISPLAYSURFACE.fill(WHITE)

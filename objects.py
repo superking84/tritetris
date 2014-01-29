@@ -55,9 +55,6 @@ class Field(object):
             self.active_block = self.block_queue.pop(0)
             self.add_block_to_queue(self.create_random_block())
             self.place_block((1,4))
-            
-            # don't believe I need this return statement -- let's see
-            # return block_to_return
         else:
             print "Queue is empty!"
             
@@ -67,7 +64,7 @@ class Field(object):
         block.set_locations(location)
         for coordinate in block.locations:
             row, column = coordinate
-            self.cells[row][column] = block.color
+            self.cells[row][column] = {'color':block.color, 'active':True}
             
     def active_block_has_landed(self):
         block = self.active_block
@@ -88,23 +85,28 @@ class Field(object):
         
         for coordinate in block.locations:
             row, column = coordinate
-            self.cells[row][column] = block.color
-            
-        self.get_block_from_queue()
+            self.cells[row][column] = {'color':block.color, 'active':False}
         
     def move_active_block(self, direction):
-        if not self.active_block_has_landed():
-            block = self.active_block
-            old_location = block.locations
-            for coordinate in old_location:
-                row, column = coordinate
-                self.cells[row][column] = None
+        block = self.active_block
+        delta_row, delta_column = direction
+        
+        for coordinate in block.locations:
+            row, column = coordinate
+            new_row, new_column = (row + delta_row, column + delta_column)
+            if new_column >= self.num_columns:
+                return False
+            if self.cells[new_row][new_column] and \
+               not self.cells[new_row][new_column]['active']:
+                return False
             
-            row, column = block.locations[0]
-            delta_row, delta_column = direction
-            self.place_block((row + delta_row, column + delta_column))
-        else:
-            self.drop_active_block()
+                
+        for coordinate in block.locations:
+            row, column = coordinate
+            self.cells[row][column] = None
+        
+        row, column = block.locations[0]
+        self.place_block((row + delta_row, column + delta_column))
 
     def rotate_block(self, clockwise=True):
         '''
