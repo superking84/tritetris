@@ -19,7 +19,7 @@ FPS = 40
 # proportionality
 SCREEN_WIDTH, SCREEN_HEIGHT = 480, 600
 FIELD_WIDTH = SCREEN_WIDTH * 5 / 8
-NUM_COLUMNS = 20
+NUM_COLUMNS = 15
 CELL_HEIGHT = CELL_WIDTH = FIELD_WIDTH / NUM_COLUMNS
 NUM_ROWS = SCREEN_HEIGHT / CELL_HEIGHT
 
@@ -44,6 +44,12 @@ def draw_field(surface, field):
     
 def tick(field):
     field.move_active_block([1,0])
+    
+    # something may not be quite right here-- examine tomorrow
+    for i in range(len(field.cells)):
+        if all(field.cells[i]):
+            field.cells.pop(i)
+            field.cells.insert(0, [None for j in range(field.num_columns)])
     
 def play():
     directions = {K_LEFT:[0,-1], K_RIGHT:[0,1]}
