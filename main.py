@@ -41,21 +41,19 @@ def draw_field(surface, field):
                 cell_color = field.cells[i][j]['color']
                 pygame.draw.rect(surface, cell_color, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT))
                 pygame.draw.rect(surface, BLACK, pygame.Rect(j * CELL_WIDTH, i * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT), 1)
+                
+    pygame.draw.line(surface, BLACK, (FIELD_WIDTH, 0), (FIELD_WIDTH, SCREEN_HEIGHT))
     
-def tick(field):
-    field.move_active_block([1,0])
-    
-    # something may not be quite right here-- examine tomorrow
+def tick(field):    
     for i in range(len(field.cells)):
         if all(field.cells[i]):
             field.cells.pop(i)
             field.cells.insert(0, [None for j in range(field.num_columns)])
-    
+       
 def play():
     directions = {K_LEFT:[0,-1], K_RIGHT:[0,1]}
     field = objects.Field(NUM_ROWS, NUM_COLUMNS)
-    # field.load_queue()
-    # field.get_block_from_queue()
+    field.place_active_block((1,4))
     time_counter = 0
     tick_delay = 600
     pause = False
@@ -64,10 +62,12 @@ def play():
             time_counter += FPS
         if time_counter >= tick_delay:
             if field.active_block_has_landed():
-                print "True"
-                field.drop_active_block()
-                field.get_block_from_queue()
+                field.deactivate_active_block()
             tick(field)
+            if not field.active_block:
+                field.get_block_from_queue()
+                field.place_active_block((1,4))
+            field.move_active_block([1,0])
             time_counter = 0
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -87,8 +87,7 @@ def play():
                     if event.key == K_DOWN:
                         time_counter = tick_delay
                     if event.key == K_SPACE:
-                        while not field.active_block_has_landed():
-                            tick(field)
+                        field.drop_active_block()
                     
                     
         DISPLAYSURFACE.fill(WHITE)

@@ -54,11 +54,10 @@ class Field(object):
         if self.block_queue:
             self.active_block = self.block_queue.pop(0)
             self.add_block_to_queue(self.create_random_block())
-            self.place_block((1,4))
         else:
             print "Queue is empty!"
             
-    def place_block(self, location):
+    def place_active_block(self, location):
         block = self.active_block
         
         block.set_locations(location)
@@ -81,11 +80,17 @@ class Field(object):
                 return True
                 
     def drop_active_block(self):
+        while not self.active_block_has_landed():
+            self.move_active_block([1,0])
+                
+    def deactivate_active_block(self):
         block = self.active_block
         
         for coordinate in block.locations:
             row, column = coordinate
             self.cells[row][column] = {'color':block.color, 'active':False}
+            
+        self.active_block = None
         
     def move_active_block(self, direction):
         block = self.active_block
@@ -106,7 +111,7 @@ class Field(object):
             self.cells[row][column] = None
         
         row, column = block.locations[0]
-        self.place_block((row + delta_row, column + delta_column))
+        self.place_active_block((row + delta_row, column + delta_column))
 
     def rotate_block(self, clockwise=True):
         '''
@@ -136,7 +141,7 @@ class Field(object):
             block.set_locations(block.locations[0])
             if block.locations == old_locations:
                 block.orientation = old_orientation
-            self.place_block(head_loc)
+            self.place_active_block(head_loc)
 
 class Block(object):
     '''
