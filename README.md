@@ -11,7 +11,7 @@ Controls:
 Left/right arrow: Moves block from side to side.
 Up arrow: Rotate block clockwise.
 Down arrow: Pull block down faster (right now you have to press repeatedly, I
-            am going to fix so you can just hold the key down)>
+            am going to fix so you can just hold the key down).
 "P" key: Pause the game.
 
 It's pronounced "Trite-Tris", by the way, not "Tri-Tetris."  That makes it sound
