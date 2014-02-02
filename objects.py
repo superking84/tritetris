@@ -178,6 +178,9 @@ class Block(object):
         return '%s %s' % (self.color, self.type)
         
     __str__ = __repr__
+    
+    def get_offsets(self):
+        return self._type_offsets[self.type][self.orientation]
 
     def set_locations(self, init_location):
         '''
@@ -193,7 +196,7 @@ class Block(object):
             new_coordinate = (init_location[0]  + offset[0],\
                             init_location[1] + offset[1])
             new_locations.append(new_coordinate)
-            
+        
         for coordinate in new_locations:
             y, x = coordinate
             if y not in xrange(0,self.field.num_rows) or \
