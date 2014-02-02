@@ -14,6 +14,8 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = '%d, %d' % (x, y)
 pygame.init()
 clock = pygame.time.Clock()
 FPS = 40
+times_large = pygame.font.SysFont("Times New Roman", 72)
+times_small = pygame.font.SysFont("Times New Roman", 18, bold=True)
 
 # draw constants
 # a lot of the constants are related to one another to create
@@ -30,7 +32,8 @@ pygame.display.set_caption("TriteTris!")
 def terminate():
     pygame.quit()
     sys.exit()
-    
+
+# drawing functions
 def draw_screen(surface, field):
     '''
     Draws the given field and its current state to the display surface.
@@ -51,9 +54,13 @@ def draw_screen(surface, field):
         (SCREEN_WIDTH, (SCREEN_HEIGHT / 4) * 3))
         
     # draw the next block up
-    nb_boundaries = (FIELD_WIDTH + ((SCREEN_WIDTH - FIELD_WIDTH) / 2), \
-                    ((SCREEN_HEIGHT / 4) * 3) + ((SCREEN_HEIGHT - (SCREEN_HEIGHT / 4 * 3)) / 2))
+    nb_boundaries = (((SCREEN_WIDTH + FIELD_WIDTH) / 2) - CELL_WIDTH, (SCREEN_HEIGHT / 8 * 7) - CELL_HEIGHT)
     draw_next_block(surface, field, nb_boundaries)
+    next_text = times_small.render("Next Block:", True, BLACK)
+    next_text_rect = next_text.get_rect()
+    next_text_rect.centerx = nb_boundaries[0] - CELL_WIDTH
+    next_text_rect.centery = nb_boundaries[1] - (2 * CELL_HEIGHT)
+    surface.blit(next_text, next_text_rect)
     
 def draw_outlined_rect(surface, color, rect):
     pygame.draw.rect(surface, color, rect)
@@ -88,13 +95,55 @@ def tick(field):
         field.place_active_block((1,4))
     
     field.move_active_block([1,0])
-            
+     
+def intro():
+    options = {'Play':play, 'Quit':terminate}
+    option_list = options.keys()
+    option_list.sort()
+    curr_opt_index = 0
+    option_text = []
+    i = 0
+    for key in option_list:
+        text = times_large.render(key, True, BLACK)
+        rect = text.get_rect()
+        rect.centerx = SCREEN_WIDTH / 2
+        rect.centery = (3 * SCREEN_HEIGHT / 8) + (72 * i)
+        option_text.append({'key':key, 'text':text, 'rect':rect})
+        i += 1
+    
+    selected = option_text[0]
+    
+    r,g,b=255,255,255
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+            if event.type == KEYUP:
+                if event.key == K_ESCAPE:
+                    terminate()
+                if event.key == K_UP:
+                    curr_opt_index = (curr_opt_index - 1) % len(option_list)
+                    selected = option_text[curr_opt_index]
+                if event.key == K_DOWN:
+                    curr_opt_index = (curr_opt_index + 1) % len(option_list)
+                    selected = option_text[curr_opt_index]
+                if event.key == K_RETURN:
+                    options[selected['key']]()
+                    
+        DISPLAYSURFACE.fill(LIGHT_GREY)
+        for entry in option_text:
+            if entry['text'] == selected['text']:
+                pygame.draw.circle(DISPLAYSURFACE, BLACK, (entry['rect'].left - 25, entry['rect'].centery), 15)
+            DISPLAYSURFACE.blit(entry['text'], entry['rect'])
+        
+        pygame.display.update()
+    
+                
 def play():
     # load font and messages
-    times = pygame.font.SysFont("Times New Roman", 72)
     pause_msg = "PAUSED"
     scrambler = scramble.Scrambler(pause_msg)
-    pause_text = times.render(pause_msg, True, BLACK)
+    pause_text = times_large.render(pause_msg, True, BLACK)
     pause_text_rect = pause_text.get_rect()
     pause_text_rect.centerx = SCREEN_WIDTH / 2
     pause_text_rect.centery = SCREEN_HEIGHT / 2
@@ -122,12 +171,12 @@ def play():
                 if event.key == K_l:
                     print field.block_queue
                 if event.key == K_o:
-                    print field.block_queue[0].orientation
+                    print nb_boundaries
                 if event.key == K_p:
                     pause = not pause
                     if pause:
                         scrambled_msg = scrambler.get_scrambled_word()
-                        pause_text = times.render(scrambled_msg, True, BLACK)
+                        pause_text = times_large.render(scrambled_msg, True, BLACK)
                 if not pause:
                     if event.key == K_UP:
                         field.rotate_block()
@@ -149,4 +198,4 @@ def play():
         clock.tick(FPS)
         
 if __name__ == '__main__':
-    play()
+    intro()
