@@ -111,8 +111,11 @@ class Field(object):
         block.set_locations(location)
         for coordinate in block.locations:
             row, column = coordinate
+            if self.cells[row][column]:
+                return False
             self.cells[row][column] = {'color':block.color, 'active':True}
-
+        return True
+            
     def rotate_block(self, clockwise=True):
         '''
         Tilts the Block clockwise 90 degrees if clockwise is set to True(set to

@@ -92,9 +92,11 @@ def tick(field):
     
     if not field.active_block:
         field.get_block_from_queue()
-        field.place_active_block((1,4))
+        if not field.place_active_block((1,4)):
+            return False
     
     field.move_active_block([1,0])
+    return True
      
 def intro():
     options = {'Play':play, 'Quit':terminate}
@@ -113,7 +115,6 @@ def intro():
     
     selected = option_text[0]
     
-    r,g,b=255,255,255
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -137,8 +138,7 @@ def intro():
             DISPLAYSURFACE.blit(entry['text'], entry['rect'])
         
         pygame.display.update()
-    
-                
+
 def play():
     # load font and messages
     pause_msg = "PAUSED"
@@ -147,6 +147,9 @@ def play():
     pause_text_rect = pause_text.get_rect()
     pause_text_rect.centerx = SCREEN_WIDTH / 2
     pause_text_rect.centery = SCREEN_HEIGHT / 2
+    game_over_text = times_large.render("Game Over", True, BLACK)
+    game_over_text_rect = game_over_text.get_rect()
+    game_over_text_rect.center = pause_text_rect.center
     
     # game-specific objects
     directions = {K_LEFT:[0,-1], K_RIGHT:[0,1]}
@@ -155,12 +158,14 @@ def play():
     time_counter = 0
     tick_delay = 600
     pause = False
+    game_over = False
     
     while True:
-        if not pause:
+        if not (pause or game_over):
             time_counter += FPS
         if time_counter >= tick_delay:
-            tick(field)
+            if not tick(field):
+                game_over = True
             time_counter = 0
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -168,16 +173,13 @@ def play():
             if event.type == KEYUP:
                 if event.key == K_ESCAPE:
                     terminate()
-                if event.key == K_l:
-                    print field.block_queue
-                if event.key == K_o:
-                    print nb_boundaries
                 if event.key == K_p:
-                    pause = not pause
-                    if pause:
-                        scrambled_msg = scrambler.get_scrambled_word()
-                        pause_text = times_large.render(scrambled_msg, True, BLACK)
-                if not pause:
+                    if not game_over:
+                        pause = not pause
+                        if pause:
+                            scrambled_msg = scrambler.get_scrambled_word()
+                            pause_text = times_large.render(scrambled_msg, True, BLACK)
+                if not (pause or game_over):
                     if event.key == K_UP:
                         field.rotate_block()
                     if event.key in directions:
@@ -193,6 +195,9 @@ def play():
             DISPLAYSURFACE.blit(pause_text, pause_text_rect)
         else:
             draw_screen(DISPLAYSURFACE, field)
+            if game_over:
+                DISPLAYSURFACE.blit(game_over_text, game_over_text_rect)
+                
         
         pygame.display.update()
         clock.tick(FPS)
