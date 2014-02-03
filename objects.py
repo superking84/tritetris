@@ -56,6 +56,12 @@ class Field(object):
         self.block_queue.append(block)
     
     def create_random_block(self):
+        '''
+        Selection is not weighted toward any particular blocks; each block
+        has an equal chance of being selected.
+        This is an extremely simplistic method nothing like the algorithm
+        used in official versions of the game.
+        '''
         return Block(self, random.choice(Block._types),\
                      colors.get_random_color())    
     
@@ -116,7 +122,7 @@ class Field(object):
             self.cells[row][column] = {'color':block.color, 'active':True}
         return True
             
-    def rotate_block(self, clockwise=True):
+    def rotate_active_block(self, clockwise=True):
         '''
         Tilts the Block clockwise 90 degrees if clockwise is set to True(set to
         True by default), counterclockwise if False.

@@ -181,7 +181,7 @@ def play():
                             pause_text = times_large.render(scrambled_msg, True, BLACK)
                 if not (pause or game_over):
                     if event.key == K_UP:
-                        field.rotate_block()
+                        field.rotate_active_block()
                     if event.key in directions:
                         field.move_active_block(directions[event.key])
                     if event.key == K_DOWN:
